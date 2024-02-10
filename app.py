@@ -19,7 +19,11 @@ def add_header(response):
     response.headers["Cache-Control"] = "no-cache"
     return response
 
-
+def verify_api(user_key):
+    api_rows = query_db("SELECT api_key FROM users")
+    list_api_keys = [row["api_key"] for row in api_rows]
+    return user_key in list_api_keys
+    
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -170,17 +174,118 @@ def room(room_id):
     return render_with_error_handling('room.html',
             room=room, user=user)
 
-# -------------------------------- API ROUTES ----------------------------------
+# -------------------------------- API ROUTES ---------------------------------- 
 
 # POST to change the user's name
-@app.route('/api/user/name')
+@app.route('/api/user/name', methods = ["POST"])
 def update_username():
     return {}, 403
 
 # POST to change the user's password
 
 # POST to change the name of a room
+@app.route('/api/rooms/<int:room_id>/name', methods = ["POST"])
+def change_room_name(room_id):
+    #get the api key
+    api_key = request.headers.get('api-key')
+    # verify if valid user
+    valid = verify_api(api_key)
+    #get the text body
+    room_name = request.data.decode("utf-8")
+    room = room_name[1:len(room_name)-1]
+
+    #save the new room name into the database
+    if valid:
+        db = get_db()
+        cursor = db.execute("UPDATE rooms SET name = ? WHERE id = ?", (room, room_id))
+        db.commit()
+        cursor.close()
+    return ""
+
+    
 
 # GET to get all the messages in a room
+@app.route('/api/rooms/<int:room_id>/messages', methods = ["GET"])
+def get_messages_in_room(room_id):
+    query = "SELECT * FROM messages LEFT JOIN users ON \
+        messages.user_id = users.id WHERE messages.room_id = ?"
+    messages_rows = query_db(query, [room_id])
+
+    list_of_messages = []
+    for row in messages_rows:
+        row_dict = {}
+
+        if isinstance(row["id"], bytes):
+            id = row["id"].decode('utf-8')
+        else:
+            id = row["id"]
+
+        if isinstance(row["user_id"], bytes):
+            user_id = row["user_id"].decode('utf-8')
+        else:
+            user_id = row["user_id"]
+
+        if isinstance(row["body"], bytes):
+            body = row["body"].decode('utf-8')
+        else:
+            body = row["body"]
+
+        if isinstance(row["name"], bytes):
+            name = row["name"].decode('utf-8')
+        else:
+            name = row["name"]
+
+        # if isinstance(row["room_id"], bytes):
+        #     room_id = row["room_id"].decode('utf-8')
+        # else:
+        #     room_id = row["room_id"]
+
+        
+        row_dict["message_id"] = id
+        row_dict["user_id"] = user_id
+        row_dict["body"] = body
+        #row_dict["room_id"] = row["room_id"]
+        row_dict["author"] = name
+
+        list_of_messages.append(row_dict)
+
+
+    return jsonify(list_of_messages)
+
 
 # POST to post a new message to a room
+@app.route('/api/rooms/<int:room_id>/messages', methods = ["POST"])
+def post_new_message(room_id):
+    #get the user_id
+    user_id = request.headers.get('user-id')
+    #get the api key
+    api_key = request.headers.get('api-key')
+    #verify if valid user
+    valid = verify_api(api_key)
+    #get the text body
+    body_with_quotations = request.data.decode("utf-8")
+    body_text = body_with_quotations[1:len(body_with_quotations)-1]
+
+    #do not need to get the message_id because the primary key is auto incrementing
+
+    #save the new message into the database
+    if valid:
+        db = get_db()
+        cursor = db.execute("INSERT INTO messages (user_id, room_id, body) VALUES (?, ?, ?)", [user_id, room_id, body_text])
+        db.commit()
+        cursor.close()
+    
+
+    return ""
+    
+
+
+
+
+
+
+
+
+
+        
+                   
