@@ -29,10 +29,7 @@ function postMessage(event) {
   }
 
 
-
-
 function getMessages() {
-
   // get room id
   room_id = window.location.pathname.split('/')[2];
 
@@ -45,15 +42,13 @@ function getMessages() {
     }
   })
     .then(response => response.json())
-    .then(messages => buildMessageBody(messages))
-  
+    .then(messages => buildMessageBody(messages)) 
 }
 
 
 
 
 function buildMessageBody(messages) {
-
   let messagesBlock = document.getElementById("messages_block");
 
   // clear the page at beginning of each interval so that 
@@ -72,7 +67,6 @@ function buildMessageBody(messages) {
     newContent.textContent = m.body;
     newAuthor.textContent = m.author;
 });
-
 }
 
 
@@ -105,30 +99,59 @@ function clickSave(event) {
       "room-id": room_id
      },
     body: JSON.stringify(new_name),
-     }).then(document.getElementById("room-name-span").innerHTML = new_name);
+     }).then(response => { if (response.status == 200) {
+      document.getElementById("room-name-span").innerHTML = new_name;
+      
+     }
+     else {console.log("not a valid user")}})
+  }
+  
 
+
+
+/* For profile.html */
+
+function updateUsername(event) {
+  event.preventDefault()
+  newName = document.getElementById("username-input").value;
+
+  fetch(`/api/profile/user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", 
+      "user-id": WATCH_PARTY_USER_ID,
+      "user-name": newName,
+      "api-key": WATCH_PARTY_API_KEY,
+     },
+     }).then(response => { if (response.status == 200) {
+      console.log(response)
+      console.log("your username has been updated")
+      
+     }
+     else {console.log("not a valid user; consider making an account before updating your information")}})
 }
 
 
+function updatePassword(event) {
+  event.preventDefault()
+  newPass = document.getElementById("password-input").value;
+  user = document.getElementById("username-input").value;
 
-//alternate way to add event listeners to the edit and save buttons
-//need to be defined outside the function so they are set immediately on the page load
-// without having to call a function
-
-// getElementById("edit-button").addEventListner("click", function (e){
-//   getElementById("display-id").removeAttribute("class").addAttribute("class", "display hide");
-//   getElementById("edit-id").removeAttribute("class").addAttribute("class", "edit");
-// })
-
-// getElementById("save-button").addEventListner("click", function (e){
-//   new_name = getElementById("input-value").value
-//   getElementById("room-name-span").innerHTML = new_name;
-//   getElementById("edit-id").removeAttribute("class").addAttribute("class", "display");
-//   getElementById("display-id").removeAttribute("class").addAttribute("class", "edit hide");
-
-// })
-
-
+  fetch(`/api/profile/password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", 
+      "user-id": WATCH_PARTY_USER_ID,
+      "password": newPass,
+      "username": user,
+      "api-key": WATCH_PARTY_API_KEY,
+     },
+     }).then(response => { if (response.status == 200) {
+      console.log("your password has been updated")
+      
+     }
+     else {console.log("not a valid user; consider making an account before updating your information")}})
+}
 
 
 

@@ -177,11 +177,44 @@ def room(room_id):
 # -------------------------------- API ROUTES ---------------------------------- 
 
 # POST to change the user's name
-@app.route('/api/user/name', methods = ["POST"])
+@app.route('/api/profile/user', methods = ["POST"])
 def update_username():
-    return {}, 403
+    #get the infromation sent in the script.js request 
+    api_key = request.headers.get('api-key')
+    user_name = request.headers.get('user-name')
+    user_id = request.headers.get('user-id')
+    valid=verify_api(api_key)
+
+    if valid:
+        db = get_db()
+        cursor = db.execute("UPDATE users SET name = ? WHERE id = ? AND api_key = ?", [user_name, user_id, api_key])
+        db.commit()
+        cursor.close()
+        resp = redirect('/profile')
+        return resp
+    else:
+        return None
+
 
 # POST to change the user's password
+@app.route('/api/profile/password', methods = ["POST"])
+def update_password():
+    #get the infromation sent in the script.js request 
+    api_key = request.headers.get('api-key')
+    password = request.headers.get('password')
+    user_id = request.headers.get('user-id')
+    user = request.headers.get('user')
+    valid=verify_api(api_key)
+
+    if valid:
+        db = get_db()
+        cursor = db.execute("UPDATE users SET password = ? WHERE id = ? AND api_key = ? AND name=?", [password, user_id, api_key, user])
+        db.commit()
+        cursor.close()
+        resp = redirect('/profile')
+        return resp
+    else:
+        return None
 
 # POST to change the name of a room
 @app.route('/api/rooms/<int:room_id>/name', methods = ["POST"])
@@ -194,13 +227,14 @@ def change_room_name(room_id):
     room_name = request.data.decode("utf-8")
     room = room_name[1:len(room_name)-1]
 
-    #save the new room name into the database
+    #save the new room name into the database if valid user
     if valid:
         db = get_db()
         cursor = db.execute("UPDATE rooms SET name = ? WHERE id = ?", (room, room_id))
         db.commit()
         cursor.close()
-    return ""
+        return {}
+    return None
 
     
 
@@ -234,17 +268,10 @@ def get_messages_in_room(room_id):
             name = row["name"].decode('utf-8')
         else:
             name = row["name"]
-
-        # if isinstance(row["room_id"], bytes):
-        #     room_id = row["room_id"].decode('utf-8')
-        # else:
-        #     room_id = row["room_id"]
-
         
         row_dict["message_id"] = id
         row_dict["user_id"] = user_id
         row_dict["body"] = body
-        #row_dict["room_id"] = row["room_id"]
         row_dict["author"] = name
 
         list_of_messages.append(row_dict)
@@ -268,15 +295,16 @@ def post_new_message(room_id):
 
     #do not need to get the message_id because the primary key is auto incrementing
 
-    #save the new message into the database
+    #save the new message into the database if valid user
     if valid:
         db = get_db()
         cursor = db.execute("INSERT INTO messages (user_id, room_id, body) VALUES (?, ?, ?)", [user_id, room_id, body_text])
         db.commit()
         cursor.close()
+        return {}
     
 
-    return ""
+    return None
     
 
 
