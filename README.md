@@ -4,6 +4,17 @@
 
 **DUE: Friday, February 9 by 5:00pm**
 
+**SUBMITTED: Sunday, February 11 at 10:30am with Extension**
+
+**Sources**
+- Aïcha Camara
+- Fei Wang
+- https://stackoverflow.com/questions/70580332/how-to-send-an-object-via-fetch-to-a-dynamic-api-route-in-next-js
+- https://www.digitalocean.com/community/tutorials/how-to-modify-attributes-classes-and-styles-in-the-dom
+- https://www.javatpoint.com/how-to-change-the-column-value-in-sql
+
+
+
 ### Instructions
 
 For this exercise, we will build a group chat web application with asynchronous
